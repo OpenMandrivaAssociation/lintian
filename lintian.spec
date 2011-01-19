@@ -1,7 +1,9 @@
+%define perlvendorlib %(eval "`%{__perl} -V:installvendorlib`"; echo $installvendorlib)
+
 Name:	lintian  
 Group:	Development/Languages  
 Version:	2.4.3
-Release:	%mkrel 1
+Release:	%mkrel 2
 License:	UNKNOWN  
 Summary:	Debian package checker  
 Source:		lintian_%{version}.tar.gz  
@@ -15,6 +17,7 @@ BuildRequires:	zlib-devel
 BuildRequires:	sed
 BuildRequires:	dpkg
 BuildRequires:	perl-IPC-Run, perl-Test-Pod, perl-AptPkg, perl-Parse-DebianChangelog
+Provides: perl(Read_pkglists)
 %description  
 Lintian dissects Debian packages and reports bugs and policy  
 violations. It contains automated checks for many aspects of Debian  
@@ -30,7 +33,7 @@ This package is useful for all people who want to check Debian
 packages for compliance with Debian policy. Every Debian maintainer  
 should check packages with this tool before uploading them to the  
 archive.  
-  
+
 %prep  
 rm -rf %{name}-%{version}  
 
@@ -48,15 +51,24 @@ perl -p -e 'BEGIN { open(HELP,"doc/help.tmp") or die; local $/=undef; $h = <HELP
   
 %install  
 rm -rf $RPM_BUILD_ROOT  
-mkdir -p $RPM_BUILD_ROOT%{_bindir}
-sed 's/<VERSION>/%{version}/' frontend/lintian > $RPM_BUILD_ROOT%{_bindir}/lintian
-mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}
+mkdir -p $RPM_BUILD_ROOT%{_bindir} $RPM_BUILD_ROOT/%{_sysconfdir} $RPM_BUILD_ROOT%{perlvendorlib} $RPM_BUILD_ROOT/%{_datadir}/%{name} $RPM_BUILD_ROOT/%{_mandir}/man1
+sed 's/<VERSION>/%{version}/' frontend/%{name} > $RPM_BUILD_ROOT%{_bindir}/%{name}
+sed 's/<VERSION>/%{version}/' frontend/%{name}-info > $RPM_BUILD_ROOT%{_bindir}/%{name}-info
+chmod 755 $RPM_BUILD_ROOT%{_bindir}/%{name}*
 install -m 644 doc/lintianrc.example $RPM_BUILD_ROOT%{_sysconfdir}/lintianrc
+cp -a lib/* $RPM_BUILD_ROOT%{perlvendorlib}
+cp -a checks collection data unpack $RPM_BUILD_ROOT/%{_datadir}/%{name}
+cp -a man/* $RPM_BUILD_ROOT/%{_mandir}/man1
   
 %files
+%defattr (-,root,root)
+%doc doc/*
 %{_sysconfdir}/*
 %{_bindir}/*
-  
+%{perlvendorlib}/*
+%{_mandir}/man1/*
+%{_datadir}/%{name}
+
 %clean  
 rm -rf $RPM_BUILD_ROOT  
   
